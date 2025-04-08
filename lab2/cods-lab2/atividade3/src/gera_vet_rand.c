@@ -22,7 +22,6 @@ int main(int argc, char*argv[]) {
 	float *vetor1, *vetor2; //vetor que será gerada
 	long int n; //qtde de elementos do vetor
 	float elem; //valor gerado para incluir no vetor
-	double soma=0; //soma total dos elementos gerados
 	int fator=1; //fator multiplicador para gerar números negativos
 	FILE * descritorArquivo; //descritor do arquivo de saida
 	size_t ret; //retorno da funcao de escrita no arquivo de saida
@@ -61,7 +60,23 @@ int main(int argc, char*argv[]) {
 		fator *= -1;
 	}
 
-	double prod_interno = dot_product(vetor1, vetor2, n);
+	// calculos dos produtos internos
+	double prod_normal = dot_product(vetor1, vetor2, n);
+
+	double prod_invertido = 0;
+	for(long int i = n - 1; i >= 0; i--) {
+		prod_invertido += vetor1[i] * vetor2[i];
+	}
+
+	double prod_bloco1 = 0, prod_bloco2 = 0;
+	long int meio = n/2;
+	for(long int i = 0; i < meio; i++) {
+		prod_bloco1 += vetor1[i] * vetor2[i];
+	}
+	for(long int i = meio; i < n; i++) {
+		prod_bloco2 += vetor1[i] * vetor2[i];
+	}
+	double prod_blocos = prod_bloco1 + prod_bloco2;
 
 	//imprimir na saida padrao o vetor gerado
 #ifdef TEXTO
@@ -74,7 +89,10 @@ int main(int argc, char*argv[]) {
 		fprintf(stdout, "%f ", vetor2[i]);
 	}
 	fprintf(stdout, "\n");
-	fprintf(stdout, "%lf\n", prod_interno);
+	fprintf(stdout, "Resultados sequenciais:\n");
+	fprintf(stdout, "Produto normal   = %.26f\n", prod_normal);
+	fprintf(stdout, "Produto invertido= %.26f\n", prod_invertido);
+	fprintf(stdout, "Produto blocos   = %.26f\n", prod_blocos);
 #endif
 
 	//escreve o vetor no arquivo
@@ -97,11 +115,14 @@ int main(int argc, char*argv[]) {
 		fprintf(stderr, "erro de escrita no arquivo\n");
 		return 5;
 	}
-	//escreve o somatorio
-	ret = fwrite(&prod_interno, sizeof(double), 1, descritorArquivo);
+	//escreve os resultadso
+	ret = fwrite(&prod_normal, sizeof(double), 1, descritorArquivo);
+	ret = fwrite(&prod_invertido, sizeof(double), 1, descritorArquivo);
+	ret = fwrite(&prod_blocos, sizeof(double), 1, descritorArquivo);
 
 	//finaliza o uso das variaveis
 	fclose(descritorArquivo);
 	free(vetor1);
+	free(vetor2);
 	return 0;
 } 

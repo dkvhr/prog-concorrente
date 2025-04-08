@@ -4,9 +4,7 @@
 /* Codigo: Soma todos os elementos de um vetor de floats */
 
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <pthread.h>
 
 #define VERSOES
@@ -22,7 +20,8 @@ int nthreads;
 void *dot_product(void *tid) {
 	long int id = (long int) tid;
 	int ini, fim, bloco;
-	float produtos_locais = 0, *ret;
+	float *ret;
+	float produtos_locais = 0;
 
 	bloco = n / nthreads;
 	ini = id * bloco;
@@ -42,25 +41,21 @@ void *dot_product(void *tid) {
 }
 
 
-double var_relativa(double *val_seq, float *val_conc) {
-	double var = (*val_seq - *val_conc) / *val_seq;
+double var_relativa(double ref, float comparado) {
+	double var = (ref - comparado) / ref;
 	return var;
 }
 
 
 //funcao principal do programa
 int main(int argc, char * argv[]) {
-        FILE * arq; //arquivo de entrada
+        FILE *arq; //arquivo de entrada
         size_t ret; //retorno da funcao de leitura no arquivo de entrada
-        double soma_ori; //soma registrada no arquivo
-        #ifdef VERSOES
-        float prod_seq, prod_seq2, prod_seq2_2; //resultados das somas adicionais
-	float soma_seq_blocos;
-        #endif
-        float prod_interno_par_global; //resultado da soma concorrente
-        float * soma_retorno_threads; //auxiliar para retorno das threads
+	double prod_normal, prod_invertido, prod_blocos;
+        float prod_interno_par_global = 0; //resultado da soma concorrente
+        float *soma_retorno_threads; //auxiliar para retorno das threads
 
-        pthread_t * tid_sistema; //vetor de identificadores das threads no sistema
+        pthread_t *tid_sistema; //vetor de identificadores das threads no sistema
 
         //valida e recebe os valores de entrada
         if (argc < 3) {
@@ -76,14 +71,14 @@ int main(int argc, char * argv[]) {
         }
 
         //le o tamanho do vetor (primeira linha do arquivo)
-        ret = fread( & n, sizeof(long int), 1, arq);
+        ret = fread(&n, sizeof(long int), 1, arq);
         if (!ret) {
                 fprintf(stderr, "Erro de leitura das dimensoes da matriz arquivo \n");
                 return 3;
         }
 
         //aloca espaco de memoria e carrega o vetor de entrada
-        vet1 = (float * ) malloc(sizeof(float) * n);
+        vet1 = (float *) malloc(sizeof(float) * n);
         if (vet1 == NULL) {
                 printf("--ERRO: malloc()\n");
                 exit(-1);
@@ -105,6 +100,25 @@ int main(int argc, char * argv[]) {
 		return 5;
 	}
 
+	// lendo os produtos sequenciais do arquivo!
+	ret = fread(&prod_normal, sizeof(double), 1, arq);
+	if(ret != 1) {
+		fprintf(stderr, "erro na leitura do prod_normal\n");
+		return 6;
+	}
+	ret = fread(&prod_invertido, sizeof(double), 1, arq);
+	if(ret != 1) { 
+		fprintf(stderr, "Erro na leitura do prod_invertido\n"); 
+		return 7;
+	}
+	ret = fread(&prod_blocos, sizeof(double), 1, arq);
+	if(ret != 1) {
+		fprintf(stderr, "Erro na leitura do prod_blocos\n"); 
+		return 8; 
+	}
+
+	fclose(arq);
+
         //le o numero de threads da entrada do usuario 
         nthreads = atoi(argv[2]);
         //limita o numero de threads ao tamanho do vetor
@@ -125,27 +139,8 @@ int main(int argc, char * argv[]) {
                 }
         }
 
-        #ifdef VERSOES
-        // sequencial de traz para frente
-        prod_seq = 0;
-        for (int t = n - 1; t >= 0; t--) {
-                prod_seq += vet1[t] * vet2[t];
-        }
-        // sequencial bloco (== soma com 2 threads)
-        prod_seq2 = 0;
-        for (int t = 0; t < n / 2; t++) {
-                prod_seq2 += vet1[t] * vet2[t];
-        }
-        prod_seq2_2 = 0;
-        for (int t = n / 2; t < n; t++) {
-                prod_seq2_2 += vet1[t] * vet2[t];
-        }
-        soma_seq_blocos = prod_seq2 + prod_seq2_2;
-        #endif
-
         //espera todas as threads terminarem e calcula a soma total das threads
         //retorno = (float*) malloc(sizeof(float));
-        prod_interno_par_global = 0;
         for (int i = 0; i < nthreads; i++) {
                 if (pthread_join(tid_sistema[i], (void * ) &soma_retorno_threads)) {
                         printf("--ERRO: pthread_join()\n");
@@ -155,24 +150,19 @@ int main(int argc, char * argv[]) {
                 free(soma_retorno_threads);
         }
 
-        //imprime os resultados
-        printf("\n");
-        #ifdef VERSOES
-        printf("soma_seq (invertida)         = %.26f\n\n", prod_seq);
-        printf("soma_seq_blocos (2 blocos)   = %.26f\n\n", soma_seq_blocos);
-        #endif
-        printf("soma_concorrente             = %.26f\n", prod_interno_par_global);
-        //le o somatorio registrado no arquivo
-        ret = fread( &soma_ori, sizeof(double), 1, arq);
-        printf("\nSoma-ori                   = %.26lf\n", soma_ori);
+	printf("\nResultados Sequenciais (lidos do arquivo):\n");
+	printf("Produto normal    = %.26f\n", prod_normal);
+	printf("Produto invertido = %.26f\n", prod_invertido);
+	printf("Produto blocos    = %.26f\n", prod_blocos);
 
-	printf("\nVariacao relativa          = %.26lf\n", var_relativa(&soma_ori, &prod_interno_par_global));
+	printf("\nProduto Concorrente = %.26f\n", prod_interno_par_global);
+	printf("\nVariacao relativa (normal)    = %.26f\n", var_relativa(prod_normal, prod_interno_par_global));
+	printf("Variacao relativa (invertido) = %.26f\n", var_relativa(prod_invertido, prod_interno_par_global));
+	printf("Variacao relativa (blocos)    = %.26f\n", var_relativa(prod_blocos, prod_interno_par_global));
 
         //desaloca os espacos de memoria
         free(vet1);
 	free(vet2);
         free(tid_sistema);
-        //fecha o arquivo
-        fclose(arq);
         return 0;
 }
