@@ -24,9 +24,9 @@ Olhando os primeiros gráficos de tempo de execução (tempo de execução vs. N
 
 Para tempo de execucao vs N:
 
-![t_exec_vs_N_1](/graficos_filtrados/tempo_execucao_vs_N.png)
+![t_exec_vs_N_1](/lab4/ativ4/graficos_filtrados/tempo_execucao_vs_N.png)
 
-![t_exec_vs_N_2](/graficos/tempo_execucao_vs_N.png)
+![t_exec_vs_N_2](/lab4/ativ4/graficos/tempo_execucao_vs_N.png)
 
 Os tempos de execução obviamente aumentam quanto maior o valor de N. No entanto, isso não parece seguir um comportamento linear.
 
@@ -36,9 +36,9 @@ Para o N = 15000000, o tempo de execução parece diminuir conforme aumentamos o
 
 Para o N = 1000000, o tempo de execução na verdade começa a aumentar!
 
-![t_exec_vs_threads_1](/graficos_filtrados/tempo_execucao_vs_threads.png)
+![t_exec_vs_threads_1](/lab4/ativ4/graficos_filtrados/tempo_execucao_vs_threads.png)
 
-![t_exec_vs_threads_2](/graficos/tempo_execucao_vs_threads.png)
+![t_exec_vs_threads_2](/lab4/ativ4/graficos/tempo_execucao_vs_threads.png)
 
 Parece que o overhead de criar mais threads passa a não valer mais a pena a partir de 8 threads nesse caso do N = 1000000.
 
@@ -46,9 +46,9 @@ Vamos conseguir olhar melhor esses dois comportamentos nos próximos gráficos d
 
 ### Aceleração vs Threads
 
-![acel_vs_threads_1](/graficos_filtrados/aceleracao_vs_threads.png)
+![acel_vs_threads_1](/lab4/ativ4/graficos_filtrados/aceleracao_vs_threads.png)
 
-![acel_vs_threads_2](/graficos/aceleracao_vs_threads.png)
+![acel_vs_threads_2](/lab4/ativ4/graficos/aceleracao_vs_threads.png)
 
 A aceleração não parece aumentar muito (na verdade ela diminui bem rapidamente) para valores pequenos de N.
 
@@ -60,13 +60,13 @@ Isso demonstra que aumentar o número de threads não começa a valer tanto a pe
 
 Aqui um gráfico de barras demonstrando melhor esse comportamento (sem o N = 15000000):
 
-![acel_barras](/graficos_filtrados/comparacao_aceleracao_barras.png)
+![acel_barras](/lab4/ativ4/graficos_filtrados/comparacao_aceleracao_barras.png)
 
 ### Eficiência vs Threads
 
 Agora vamos olhar para a eficiência:
 
-![efic_vs_threads_2](/graficos/eficiencia_vs_threads.png)
+![efic_vs_threads_2](/lab4/ativ4/graficos/eficiencia_vs_threads.png)
 
 Antes de qualquer coisa, é possível ver que a eficiência está acima de 1 em alguns casos. Acredito que isso seja um problema de ponto flutuante e esses casos devem ser descartados.
 
