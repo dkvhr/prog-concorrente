@@ -13,7 +13,7 @@ int out = 0;
 
 sem_t empty;
 sem_t full;
-pthread_mutex_t mutex_buf;
+sem_t sem_buf;
 
 int ehPrimo(long long int n) {
 	int i;
@@ -28,19 +28,19 @@ int ehPrimo(long long int n) {
 void *produtor(void *arg) {
 	for(long long int i = 1; i <= N; i++) {
 		sem_wait(&empty);
-		pthread_mutex_lock(&mutex_buf);
+		sem_wait(&sem_buf);
 		buffer[in] = i;
 		in = (in + 1) % M;
-		pthread_mutex_unlock(&mutex_buf);
+		sem_post(&sem_buf);
 		sem_post(&full);
 	}
 
 	for(long long int j = 0; j < C; j++) {
 		sem_wait(&empty);
-		pthread_mutex_lock(&mutex_buf);
+		sem_wait(&sem_buf);
 		buffer[in] = -1;
 		in = (in + 1) % M;
-		pthread_mutex_unlock(&mutex_buf);
+		sem_post(&sem_buf);
 		sem_post(&full);
 	}
 
@@ -53,10 +53,10 @@ void *consumidor(void *arg) {
 	int cnt = 0;
 	while(1) {
 		sem_wait(&full);
-		pthread_mutex_lock(&mutex_buf);
+		sem_wait(&sem_buf);
 		val = buffer[out];
 		out = (out + 1) % M;
-		pthread_mutex_unlock(&mutex_buf);
+		sem_post(&sem_buf);
 		sem_post(&empty);
 		if(val == -1) {
 			break;
@@ -79,7 +79,7 @@ int main(void) {
 	primo_counter = malloc(C * sizeof(int));
 	sem_init(&empty, 0, M);
 	sem_init(&full, 0, 0);
-	pthread_mutex_init(&mutex_buf, NULL);
+	sem_init(&sem_buf, 0, 1);
 
 	pthread_t prod;
 	pthread_t cons[C];
@@ -105,10 +105,12 @@ int main(void) {
 
 	int total_primos = 0;
 	int vencedor = 0;
-	for(int i = 0; i < C; i++) {
-		total_primos += primo_counter[i];
-		if(primo_counter[i] > primo_counter[vencedor]) {
-			vencedor = i;
+	if(C>0) {
+		for(int i = 0; i < C; i++) {
+			total_primos += primo_counter[i];
+			if(primo_counter[i] > primo_counter[vencedor]) {
+				vencedor = i;
+			}
 		}
 	}
 
@@ -120,7 +122,7 @@ int main(void) {
 	free(primo_counter);
 	sem_destroy(&empty);
 	sem_destroy(&full);
-	pthread_mutex_destroy(&mutex_buf);
+	sem_destroy(&sem_buf);
 
 	return 0;
 }
